@@ -3,6 +3,8 @@ title: Epidemiological analysis using mixing matrices in R
 output: github_document
 ---
 
+<img src="man/figures/logo.png" align="right" height="139" alt="epimixr logo" />
+
 <!-- badges: start -->
 ![GitHub R package version](https://img.shields.io/github/r-package/v/sbfnk/epimixr)
 [![R-CMD-check](https://github.com/sbfnk/epimixr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/sbfnk/epimixr/actions/workflows/R-CMD-check.yaml)
