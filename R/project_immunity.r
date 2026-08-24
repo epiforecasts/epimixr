@@ -1,17 +1,33 @@
 ##' Project immunity from a baseline via vaccination coverage rates
 ##'
+##' The projection proceeds in steps of one \code{time_unit}, with everyone
+##' ageing by one \code{time_unit} at each step. Ages, the vaccination schedule
+##' and all times are therefore given in the same unit, set by
+##' \code{time_unit}: years by default, but months or any other supported unit
+##' work in the same way.
+##'
+##' Times (\code{baseline_time}, \code{time} and the column names of
+##' \code{coverage}) can be given as numbers counted in \code{time_unit} (e.g.
+##' calendar years), as \code{Date} objects, or as character strings holding
+##' either of these, with \code{"YYYY-MM"} taken to mean the first day of that
+##' month.
+##'
 ##' @title Project immunity from a baseline
 ##' @param baseline_immunity baseline immunity, as a named vector; the names
-##'   correspond to lower limits of the age groups, and the vector itself to the
-##'   corresponding levels of immunity.
-##' @param baseline_year year at which baseline immunity is taken (corresponding
-##'   to a column in the \code{coverage} argument)
-##' @param year year to project to
+##'   correspond to lower limits of the age groups (in \code{time_unit}), and
+##'   the vector itself to the corresponding levels of immunity.
+##' @param baseline_time time at which baseline immunity is taken
+##'   (corresponding to a column in the \code{coverage} argument)
+##' @param time time to project to
 ##' @param coverage coverage with multiple vaccine doses, given as a matrix in
-##'   which each row is a dose and each (named) column a year
-##' @param schedule the ages at which vaccines are given (in years).
+##'   which each row is a dose and each (named) column a time
+##' @param schedule the ages at which vaccines are given (in \code{time_unit}).
 ##' @param maternal_immunity the proportion maternally immune.
 ##' @param efficacy vaccine efficacy.
+##' @param time_unit the unit of time and age; one of "year" (default),
+##'   "month", "week" or "day".
+##' @param baseline_year deprecated, use \code{baseline_time} instead
+##' @param year deprecated, use \code{time} instead
 ##' @return a data frame of immunity levels by age group (as in
 ##'   \code{baseline_immunity}).
 ##' @author Sebastian Funk <sebastian.funk@lshtm.ac.uk>
@@ -26,14 +42,44 @@
 ##'   baseline_immunity, 2018, 2019, coverage = coverage,
 ##'   schedule = c(1, 2), 0.5, 0.95
 ##' )
-project_immunity <- function(baseline_immunity, baseline_year, year, coverage,
-                             schedule, maternal_immunity, efficacy) {
+##'
+##' ## the same projection on a monthly time scale
+##' monthly_immunity <- c(`24` = 0.85, `60` = 0.9, `120` = 0.95)
+##' monthly_coverage <- matrix(rep(0.9, 120), nrow = 2)
+##' colnames(monthly_coverage) <- format(
+##'   seq(as.Date("2015-01-01"), as.Date("2019-12-01"), by = "month"), "%Y-%m"
+##' )
+##' project_immunity(
+##'   monthly_immunity, "2018-01", "2019-01", coverage = monthly_coverage,
+##'   schedule = c(12, 24), 0.5, 0.95, time_unit = "month"
+##' )
+project_immunity <- function(baseline_immunity, baseline_time, time, coverage,
+                             schedule, maternal_immunity, efficacy,
+                             time_unit = c("year", "month", "week", "day"),
+                             baseline_year, year) {
+  time_unit <- match.arg(time_unit)
+
+  ## deprecated arguments
+  if (!missing(baseline_year)) {
+    warning("'baseline_year' is deprecated; use 'baseline_time' instead")
+    if (missing(baseline_time)) baseline_time <- baseline_year
+  }
+  if (!missing(year)) {
+    warning("'year' is deprecated; use 'time' instead")
+    if (missing(time)) time <- year
+  }
+
   ## checks
   if (missing(baseline_immunity)) stop("baseline immunity must be provided")
-  if (missing(baseline_year)) stop("baseline year must be provided")
-  if (missing(year)) stop("'year' argument must be provided")
-  if (!(year > baseline_year)) {
-    stop("'year' must be greater than 'baseline_year'")
+  if (missing(baseline_time)) stop("baseline time must be provided")
+  if (missing(time)) stop("'time' argument must be provided")
+  baseline_step <- time_steps(baseline_time, time_unit, "baseline_time")
+  end_step <- time_steps(time, time_unit, "time")
+  if (length(baseline_step) != 1 || length(end_step) != 1) {
+    stop("'baseline_time' and 'time' must each be a single time")
+  }
+  if (!(end_step > baseline_step)) {
+    stop("'time' must be greater than 'baseline_time'")
   }
   if (!missing(coverage)) {
     if (missing(schedule)) stop("'schedule' must be given if 'coverage' is")
@@ -41,11 +87,34 @@ project_immunity <- function(baseline_immunity, baseline_year, year, coverage,
       stop("'coverage' must have a row for each element of 'schedule'")
     }
     if (missing(efficacy)) stop("'efficacy' must be provided if 'coverage' is")
+    if (is.null(colnames(coverage))) {
+      stop("'coverage' must have column names giving the time of each column")
+    }
+    schedule <- age_steps(schedule, time_unit, "schedule")
+    coverage_steps <- time_steps(colnames(coverage), time_unit, "coverage")
   }
   if (missing(maternal_immunity)) stop("maternal immunity must be provided")
+  if (is.null(names(baseline_immunity))) {
+    stop("'baseline_immunity' must be named with the lower age limits")
+  }
 
-  ## convert baseline to annual immunity
-  lower_age_limits <- as.integer(names(baseline_immunity))
+  ## look up coverage with a given dose at a given time
+  dose_coverage <- function(dose, step) {
+    column <- match(step, coverage_steps)
+    if (is.na(column)) {
+      stop(
+        "'coverage' has no column for ", time_unit, " ", step, "; columns run ",
+        "from ", colnames(coverage)[1], " to ",
+        colnames(coverage)[ncol(coverage)]
+      )
+    }
+    unname(coverage[dose, column])
+  }
+
+  ## convert baseline to immunity by single unit of age
+  lower_age_limits <- age_steps(
+    names(baseline_immunity), time_unit, "baseline_immunity"
+  )
   bdf <- data.frame(
     lower_age_limit = lower_age_limits,
     immunity = baseline_immunity
@@ -70,44 +139,42 @@ project_immunity <- function(baseline_immunity, baseline_year, year, coverage,
       min_age <- min_age - 1
       df <- rbind(t(c(
         lower_age_limit = min_age,
-        immunity = unname(
-          coverage[1, as.character(baseline_year - min_age + 1)]
-        ) * efficacy
+        immunity = dose_coverage(1, baseline_step - min_age + 1) * efficacy
       )), df)
     }
 
     scaling_factor <- min(df[df$lower_age_limit == schedule[1], "immunity"] /
-        coverage[1, as.character(baseline_year)], 1)
+        dose_coverage(1, baseline_step), 1)
 
     if (dim(coverage)[2] > 1) {
-      for (calc.year in seq(baseline_year + 1, year)) {
+      for (calc_step in seq(baseline_step + 1, end_step)) {
         ## move all one age group up
         df$lower_age_limit <- df$lower_age_limit + 1
         ## implement vaccination schedule
         df <- df[df$lower_age_limit > schedule[1] + 1, ]
-        first_years <- data.frame(
+        first_ages <- data.frame(
           lower_age_limit = seq(0, schedule[1] + 1),
           immunity = c(
             rep(maternal_immunity, schedule[1]),
-            coverage[1, as.character(calc.year)] * scaling_factor,
-            coverage[1, as.character(calc.year - 1)] * efficacy
+            dose_coverage(1, calc_step) * scaling_factor,
+            dose_coverage(1, calc_step - 1) * efficacy
           )
         )
-        df <- rbind(first_years, df)
+        df <- rbind(first_ages, df)
         if (dim(coverage)[1] > 1) {
           for (j in seq(2, dim(coverage)[1])) {
             immunised <- 0
             for (k in seq(1, j - 1)) {
-              old_coverage <- coverage[
-                k, as.character(calc.year - schedule[j] + schedule[k])
-              ]
+              old_coverage <- dose_coverage(
+                k, calc_step - schedule[j] + schedule[k]
+              )
               immunised <- immunised +
                 (1 - immunised) * old_coverage * efficacy
             }
             df[df$lower_age_limit == schedule[j], "immunity"] <- min(
               1,
               df[df$lower_age_limit == schedule[j], "immunity"] +
-              (1 - immunised) * coverage[j, as.character(calc.year)] *
+              (1 - immunised) * dose_coverage(j, calc_step) *
               efficacy
             )
           }

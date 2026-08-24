@@ -6,32 +6,42 @@
 \usage{
 project_immunity(
   baseline_immunity,
-  baseline_year,
-  year,
+  baseline_time,
+  time,
   coverage,
   schedule,
   maternal_immunity,
-  efficacy
+  efficacy,
+  time_unit = c("year", "month", "week", "day"),
+  baseline_year,
+  year
 )
 }
 \arguments{
 \item{baseline_immunity}{baseline immunity, as a named vector; the names
-correspond to lower limits of the age groups, and the vector itself to the
-corresponding levels of immunity.}
+correspond to lower limits of the age groups (in \code{time_unit}), and
+the vector itself to the corresponding levels of immunity.}
 
-\item{baseline_year}{year at which baseline immunity is taken (corresponding
-to a column in the \code{coverage} argument)}
+\item{baseline_time}{time at which baseline immunity is taken
+(corresponding to a column in the \code{coverage} argument)}
 
-\item{year}{year to project to}
+\item{time}{time to project to}
 
 \item{coverage}{coverage with multiple vaccine doses, given as a matrix in
-which each row is a dose and each (named) column a year}
+which each row is a dose and each (named) column a time}
 
-\item{schedule}{the ages at which vaccines are given (in years).}
+\item{schedule}{the ages at which vaccines are given (in \code{time_unit}).}
 
 \item{maternal_immunity}{the proportion maternally immune.}
 
 \item{efficacy}{vaccine efficacy.}
+
+\item{time_unit}{the unit of time and age; one of "year" (default),
+"month", "week" or "day".}
+
+\item{baseline_year}{deprecated, use \code{baseline_time} instead}
+
+\item{year}{deprecated, use \code{time} instead}
 }
 \value{
 a data frame of immunity levels by age group (as in
@@ -40,6 +50,19 @@ a data frame of immunity levels by age group (as in
 \description{
 Project immunity from a baseline via vaccination coverage rates
 }
+\details{
+The projection proceeds in steps of one \code{time_unit}, with everyone
+ageing by one \code{time_unit} at each step. Ages, the vaccination schedule
+and all times are therefore given in the same unit, set by
+\code{time_unit}: years by default, but months or any other supported unit
+work in the same way.
+
+Times (\code{baseline_time}, \code{time} and the column names of
+\code{coverage}) can be given as numbers counted in \code{time_unit} (e.g.
+calendar years), as \code{Date} objects, or as character strings holding
+either of these, with \code{"YYYY-MM"} taken to mean the first day of that
+month.
+}
 \examples{
 baseline_immunity <- c(`2` = 0.85, `5` = 0.9, `10` = 0.95)
 coverage <- matrix(rep(0.9, 10), nrow = 2)
@@ -47,6 +70,17 @@ colnames(coverage) <- as.character(seq(2015, 2019))
 project_immunity(
   baseline_immunity, 2018, 2019, coverage = coverage,
   schedule = c(1, 2), 0.5, 0.95
+)
+
+## the same projection on a monthly time scale
+monthly_immunity <- c(`24` = 0.85, `60` = 0.9, `120` = 0.95)
+monthly_coverage <- matrix(rep(0.9, 120), nrow = 2)
+colnames(monthly_coverage) <- format(
+  seq(as.Date("2015-01-01"), as.Date("2019-12-01"), by = "month"), "\%Y-\%m"
+)
+project_immunity(
+  monthly_immunity, "2018-01", "2019-01", coverage = monthly_coverage,
+  schedule = c(12, 24), 0.5, 0.95, time_unit = "month"
 )
 }
 \author{
