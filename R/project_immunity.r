@@ -93,9 +93,11 @@ project_immunity <- function(baseline_immunity, baseline_time, time, coverage,
     schedule <- age_steps(schedule, time_unit, "schedule")
     coverage_steps <- time_steps(colnames(coverage), time_unit, "coverage")
     if (anyDuplicated(coverage_steps)) {
-      clashing <- colnames(coverage)[duplicated(coverage_steps) |
-        duplicated(coverage_steps, fromLast = TRUE)]
-      shown <- paste(clashing[seq_len(min(4, length(clashing)))], collapse = ", ")
+      clashes <- duplicated(coverage_steps) |
+        duplicated(coverage_steps, fromLast = TRUE)
+      clashing <- colnames(coverage)[clashes]
+      first_few <- clashing[seq_len(min(4, length(clashing)))]
+      shown <- paste(first_few, collapse = ", ")
       if (length(clashing) > 4) {
         shown <- paste0(shown, ", ... (", length(clashing), " columns in all)")
       }
@@ -191,7 +193,7 @@ project_immunity <- function(baseline_immunity, baseline_time, time, coverage,
               1,
               df[df$lower_age_limit == schedule[j], "immunity"] +
                 (1 - immunised) * dose_coverage(j, calc_step) *
-                efficacy
+                  efficacy
             )
           }
         }
