@@ -143,8 +143,11 @@ project_immunity <- function(baseline_immunity, baseline_time, time, coverage,
       )), df)
     }
 
-    scaling_factor <- min(df[df$lower_age_limit == schedule[1], "immunity"] /
-        dose_coverage(1, baseline_step), 1)
+    scaling_factor <- min(
+      df[df$lower_age_limit == schedule[1], "immunity"] /
+        dose_coverage(1, baseline_step),
+      1
+    )
 
     if (dim(coverage)[2] > 1) {
       for (calc_step in seq(baseline_step + 1, end_step)) {
@@ -174,8 +177,8 @@ project_immunity <- function(baseline_immunity, baseline_time, time, coverage,
             df[df$lower_age_limit == schedule[j], "immunity"] <- min(
               1,
               df[df$lower_age_limit == schedule[j], "immunity"] +
-              (1 - immunised) * dose_coverage(j, calc_step) *
-              efficacy
+                (1 - immunised) * dose_coverage(j, calc_step) *
+                efficacy
             )
           }
         }
@@ -200,5 +203,5 @@ project_immunity <- function(baseline_immunity, baseline_time, time, coverage,
   df <- as.data.frame(do.call(rbind, summarised))
   ret <- df$immunity
   names(ret) <- df$lower_age_limit
-  return(ret)
+  ret
 }
