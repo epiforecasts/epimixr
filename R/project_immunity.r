@@ -92,6 +92,19 @@ project_immunity <- function(baseline_immunity, baseline_time, time, coverage,
     }
     schedule <- age_steps(schedule, time_unit, "schedule")
     coverage_steps <- time_steps(colnames(coverage), time_unit, "coverage")
+    if (anyDuplicated(coverage_steps)) {
+      clashing <- colnames(coverage)[duplicated(coverage_steps) |
+        duplicated(coverage_steps, fromLast = TRUE)]
+      shown <- paste(clashing[seq_len(min(4, length(clashing)))], collapse = ", ")
+      if (length(clashing) > 4) {
+        shown <- paste0(shown, ", ... (", length(clashing), " columns in all)")
+      }
+      stop(
+        "columns of 'coverage' must be distinct ", time_unit, "s, but these ",
+        "fall in the same ", time_unit, ": ", shown,
+        "; set 'time_unit' to the resolution of the columns"
+      )
+    }
   }
   if (missing(maternal_immunity)) stop("maternal immunity must be provided")
   if (is.null(names(baseline_immunity))) {

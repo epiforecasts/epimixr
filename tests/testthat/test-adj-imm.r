@@ -53,6 +53,16 @@ test_that("errors are thrown correctly", {
   expect_error(project_immunity(
     c(`2` = 0.9), 2000, 2004, coverage_1_dose, c(1), 0.5, 0.95
   ), "no column for year")
+
+  ## monthly columns with the time unit left at its default of years would
+  ## otherwise silently use January and discard the other eleven months
+  monthly_columns <- matrix(rep(0.9, 24), nrow = 1)
+  colnames(monthly_columns) <- format(
+    seq(as.Date("2015-01-01"), as.Date("2016-12-01"), by = "month"), "%Y-%m"
+  )
+  expect_error(project_immunity(
+    c(`2` = 0.9), 2015, 2016, monthly_columns, c(1), 0.5, 0.95
+  ), "must be distinct years")
 })
 
 test_that("adjusted immunity levels can be calculated", {
