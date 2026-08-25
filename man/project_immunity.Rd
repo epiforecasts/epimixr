@@ -13,8 +13,8 @@ project_immunity(
   maternal_immunity,
   efficacy,
   time_unit = c("year", "month", "week", "day"),
-  baseline_year,
-  year
+  baseline_year = deprecated(),
+  year = deprecated()
 )
 }
 \arguments{

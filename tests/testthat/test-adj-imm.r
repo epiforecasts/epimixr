@@ -122,18 +122,31 @@ test_that("immunity can be projected on other time scales", {
 })
 
 test_that("deprecated year arguments still work", {
+  ## lifecycle warns only once per session per call site unless asked to be
+  ## verbose, which would make these expectations depend on test order
+  old_options <- options(lifecycle_verbosity = "warning")
+  on.exit(options(old_options))
+
   yearly_immunity <- c(`2` = 0.85, `5` = 0.9, `10` = 0.95)
+  current <- project_immunity(
+    yearly_immunity, 2018, 2019, maternal_immunity = 0.5
+  )
+
   expect_warning(
-    projected <- project_immunity(
+    from_baseline_year <- project_immunity(
       yearly_immunity,
-      baseline_year = 2018, year = 2019, maternal_immunity = 0.5
+      baseline_year = 2018, time = 2019, maternal_immunity = 0.5
     ),
-    "deprecated"
+    class = "lifecycle_warning_deprecated"
   )
-  expect_equal(
-    unname(projected),
-    unname(project_immunity(
-      yearly_immunity, 2018, 2019, maternal_immunity = 0.5
-    ))
+  expect_equal(from_baseline_year, current)
+
+  expect_warning(
+    from_year <- project_immunity(
+      yearly_immunity,
+      baseline_time = 2018, year = 2019, maternal_immunity = 0.5
+    ),
+    class = "lifecycle_warning_deprecated"
   )
+  expect_equal(from_year, current)
 })

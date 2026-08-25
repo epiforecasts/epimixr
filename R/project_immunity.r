@@ -33,6 +33,7 @@
 ##' @author Sebastian Funk <sebastian.funk@lshtm.ac.uk>
 ##' @importFrom stats na.omit
 ##' @importFrom socialmixr reduce_agegroups
+##' @importFrom lifecycle deprecated is_present deprecate_warn
 ##' @export
 ##' @examples
 ##' baseline_immunity <- c(`2` = 0.85, `5` = 0.9, `10` = 0.95)
@@ -56,16 +57,22 @@
 project_immunity <- function(baseline_immunity, baseline_time, time, coverage,
                              schedule, maternal_immunity, efficacy,
                              time_unit = c("year", "month", "week", "day"),
-                             baseline_year, year) {
+                             baseline_year = deprecated(),
+                             year = deprecated()) {
   time_unit <- match.arg(time_unit)
 
   ## deprecated arguments
-  if (!missing(baseline_year)) {
-    warning("'baseline_year' is deprecated; use 'baseline_time' instead")
+  if (is_present(baseline_year)) {
+    deprecate_warn(
+      "0.1.0.9000", "project_immunity(baseline_year)",
+      "project_immunity(baseline_time)"
+    )
     if (missing(baseline_time)) baseline_time <- baseline_year
   }
-  if (!missing(year)) {
-    warning("'year' is deprecated; use 'time' instead")
+  if (is_present(year)) {
+    deprecate_warn(
+      "0.1.0.9000", "project_immunity(year)", "project_immunity(time)"
+    )
     if (missing(time)) time <- year
   }
 
