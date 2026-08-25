@@ -64,14 +64,14 @@ project_immunity <- function(baseline_immunity, baseline_time, time, coverage,
   ## deprecated arguments
   if (is_present(baseline_year)) {
     deprecate_warn(
-      "0.1.0.9000", "project_immunity(baseline_year)",
+      "0.2.0", "project_immunity(baseline_year)",
       "project_immunity(baseline_time)"
     )
     if (missing(baseline_time)) baseline_time <- baseline_year
   }
   if (is_present(year)) {
     deprecate_warn(
-      "0.1.0.9000", "project_immunity(year)", "project_immunity(time)"
+      "0.2.0", "project_immunity(year)", "project_immunity(time)"
     )
     if (missing(time)) time <- year
   }
