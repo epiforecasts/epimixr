@@ -1,7 +1,5 @@
-Epidemiological analysis using mixing matrices in R
-================
 
-<img src="man/figures/logo.png" align="right" height="139" alt="epimixr logo" />
+# Epidemiological analysis using mixing matrices in R <img src="man/figures/logo.png" align="right" height="139" alt="epimixr logo" />
 
 <!-- badges: start -->
 
