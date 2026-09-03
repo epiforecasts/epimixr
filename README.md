@@ -1,22 +1,20 @@
-Epidemiological analysis using mixing matrices in R
-================
 
-<img src="man/figures/logo.png" align="right" height="139" alt="epimixr logo" />
+# Epidemiological analysis using mixing matrices in R <img src="man/figures/logo.png" align="right" height="139" alt="epimixr logo" />
 
 <!-- badges: start -->
 
 ![GitHub R package
-version](https://img.shields.io/github/r-package/v/sbfnk/epimixr)
-[![R-CMD-check](https://github.com/sbfnk/epimixr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/sbfnk/epimixr/actions/workflows/R-CMD-check.yaml)
-[![codecov](https://codecov.io/github/sbfnk/epimixr/branch/main/graph/badge.svg?token=vK4TWfgYo0)](https://codecov.io/github/sbfnk/epimixr)
+version](https://img.shields.io/github/r-package/v/epiforecasts/epimixr)
+[![R-CMD-check](https://github.com/epiforecasts/epimixr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/epiforecasts/epimixr/actions/workflows/R-CMD-check.yaml)
+[![codecov](https://codecov.io/github/epiforecasts/epimixr/branch/main/graph/badge.svg)](https://codecov.io/github/epiforecasts/epimixr)
 [![License:
 MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <!-- badges: end -->
 
-[epimixr](https://github.com/sbfnk/epimixr) is an `R` package that uses
-social mixing matrices to conduct epidemiological analysis. It contains
-the functions `adjust_immunity` (to adjust population-level immunity by
-mixing patterns as described in [Funk et al.,
+[epimixr](https://github.com/epiforecasts/epimixr) is an `R` package
+that uses social mixing matrices to conduct epidemiological analysis. It
+contains the functions `adjust_immunity` (to adjust population-level
+immunity by mixing patterns as described in [Funk et al.,
 2019](https://doi.org/10.1186/s12916-019-1413-7)), `project_immunity`
 (to estimate immunity based on vaccination data by projecting forward
 from a given starting point of age-specific susceptibility) and
@@ -30,5 +28,5 @@ The current development version can be installed using the `remotes`
 package
 
 ``` r
-remotes::install_github("sbfnk/epimixr")
+remotes::install_github("epiforecasts/epimixr")
 ```

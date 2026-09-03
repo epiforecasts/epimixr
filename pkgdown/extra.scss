@@ -1,0 +1,5 @@
+// The hex is the only illustration on the home page, so give it more room than
+// the pkgdown default of 120px.
+.template-home img.logo {
+  width: 180px;
+}
